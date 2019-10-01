@@ -2,7 +2,6 @@
 # This script is called with $path $file
 source lib.sh
 echo "Process new GOES false color file $1 $2"
-set -x
 
 # give the image time to be written to disk
 FC_DIR="$PROCESS_DIR/fd/$TODAY/false-color"
