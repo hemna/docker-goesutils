@@ -5,7 +5,7 @@ source lib.sh
 echo "Process new GOES Channel 15 file $1 $2"
 set -x
 
-CH15_DIR="$PROCESS_DIR/$TODAY/ch15"
+CH15_DIR="$PROCESS_DIR/fd/$TODAY/ch15"
 CH15_VA="$CH15_DIR/va"
 CH15_CA="$CH15_DIR/ca"
 sleep 1
