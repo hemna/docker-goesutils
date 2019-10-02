@@ -3,7 +3,7 @@
 source lib.sh
 
 ANIMATION=${ANIMATION:-true}
-echo "Process new GOES false color file $1 $2"
+echo "FC file $1 $2"
 
 # give the image time to be written to disk
 sleep 1

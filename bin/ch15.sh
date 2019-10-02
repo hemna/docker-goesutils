@@ -3,7 +3,7 @@
 
 source lib.sh
 ANIMATION=${ANIMATION:-true}
-echo "Process new GOES Channel 15 file $1 $2"
+echo "CH15 file $1 $2"
 
 sleep 1
 crop_fd ch15 $1 $2
