@@ -1,12 +1,6 @@
 #!/bin/bash
 source lib.sh
-
-GOESDATA="/home/goes/data"
-FALSECOLOR="$GOESDATA/goes16/fd/$TODAY/false-color/"
-CH15="$GOESDATA/goes16/fd/$TODAY/ch15_enhanced/"
-M1="$GOESDATA/goes16/m1/$TODAY/ch13_enhanced"
-M2="$GOESDATA/goes16/m2/$TODAY/ch13_enhanced"
-EMWIN="$GOESDATA/emwin/$TODAY/"
+source defines.sh
 
 function monitor() {
     echo "Setup monitor for $1 and run $2"
