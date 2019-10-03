@@ -1,5 +1,9 @@
 #!/bin/bash
 
+TZ_NY=":US/Eastern"
+TZ_LA=":US/Western"
+TZ_GMT="GMT"
+
 # This is sourced from lib.sh
 BASE_DIR="/home/goes/data"
 PROCESS_DIR="$BASE_DIR/processed"

@@ -12,7 +12,7 @@ RUN apt-get install -y apt-utils pkg-config
 RUN apt-get install -y wget python3 python3-pip git-core
 RUN apt-get install -y imagemagick
 RUN apt-get install -y inotify-tools
-RUN apt-get install -y htop
+RUN apt-get install -y htop util-linux
 
 # Add telegraf monitor agent
 RUN wget -qO- https://repos.influxdata.com/influxdb.key | apt-key add -
