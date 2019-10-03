@@ -28,15 +28,19 @@ function crop_fd {
   ensure_dir $CA_CROP
 
   # Get the time of the original file
-  FILE_TIME=$(date -r $2$3 "+%H-%M-%S")
+  FILE_TIME=$(TZ=$TZ_NY date -r $2$3 "+%H-%M-%S")
 
   # Lets create the VA crop
   NEW_FILE="$VA_CROP/$FILE_TIME.png"
   convert $2$3 -crop 1024x768+2100+600 +repage $NEW_FILE
+  ./date_overlay.sh $TZ_NY $2$3 $NEW_FILE
   echo "$NEW_FILE done"
+
+  FILE_TIME=$(TZ=$TZ_LA date -r $2$3 "+%H-%M-%S")
 
   # Create the CA Cropped image
   NEW_FILE="$CA_CROP/$FILE_TIME.png"
   convert $2$3 -crop 1024x768+600+600 +repage $NEW_FILE
+  ./date_overlay.sh $TZ_LA $2$3 $NEW_FILE
   echo "$NEW_FILE done"
 }
