@@ -35,7 +35,7 @@ def prepare():
 
     extra_log_level_defaults = [
         'watchdog=ERROR',
-        'monitor=DEBUG'
+        'monitor=INFO'
     ]
 
     CONF(sys.argv[1:3], project=APP, version='1.0')
@@ -111,7 +111,7 @@ class FileHandler(object):
 
     def _execute(self, cmd):
         command = ' '.join(cmd)
-        LOG.debug("EXEC '%s'", command)
+        LOG.info("EXEC '%s'", command)
         try:
             out = subprocess.run(command, shell=True, check=False,
                                  encoding="utf-8",
@@ -126,7 +126,7 @@ class FileHandler(object):
             LOG.exception("FAIL %s", ex)
 
     def crop(self, state):
-        LOG.debug("Crop fd image for '%s'", state)
+        LOG.info("Crop fd image for '%s'", state)
         dest = self._destination(state)
         self._ensure_dir(dest)
         newfile_fmt = "%H-%M-%S"
@@ -161,7 +161,7 @@ class FileHandler(object):
 
     def animate(self, state=None):
         dest = self._destination(state=state)
-        LOG.debug("animate directory '%s'", dest)
+        LOG.info("animate directory '%s'", dest)
         file = "%s/animate.gif" % dest
         cmd = ["/usr/bin/convert", "-loop", "0", "-delay", "15",
                "%s/*.png" % dest,
@@ -191,20 +191,21 @@ class FileHandler(object):
                image_file]
         self._execute(cmd)
 
-    def process(self):
+    def process(self, animate=True):
         self._collect_info()
         if self.model == 'fd':
             # We want to crop for both CA and VA
             self.crop('va')
             self.crop('ca')
-            self.animate(state='va')
-            self.animate(state='ca')
+            if animate:
+              self.animate(state='va')
+              self.animate(state='ca')
         else:
             # This is an m1 or m2 file
             # We copy and animate
             self.copy()
-            self.overlay()
-            self.animate()
+            if animate:
+              self.animate()
 
 
 class Watcher:
@@ -234,7 +235,6 @@ class Handler(FileSystemEventHandler):
 
     @staticmethod
     def on_any_event(event):
-        LOG.debug("Got event '%s'", event.event_type)
         if event.is_directory:
             return None
 
@@ -242,15 +242,24 @@ class Handler(FileSystemEventHandler):
             # Take any action here when a file is first created.
             LOG.debug("Got create event for '%s'", event.src_path)
             fh = FileHandler(event.src_path)
+            time.sleep(1)
             fh.process()
 
 
 def process_dir(process_dir):
     for dirpath, dnames, fnames in os.walk(process_dir):
+        total_files = len(fnames)
+        LOG.info
+        cnt = 1
+        animate=False
         for f in fnames:
-            LOG.debug("Process file '%s'", fname)
-            #fh = FileHandler(conf.file)
-            #fh.process()
+            LOG.info("Process file '%s' (%s of %s)", f, cnt, total_files)
+            cnt+=1
+            process_file = "%s/%s" % (dirpath, f)
+            fh = FileHandler(process_file)
+            if cnt >= total_files:
+                animate=True
+            fh.process(animate=animate)
 
 GMT = Zone(0,False,'GMT')
 EST = Zone(-5,False,'EST')
