@@ -27,7 +27,12 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN apt-get install -y tzdata
 RUN dpkg-reconfigure --frontend noninteractive tzdata
 
-RUN apt-get install -y vim
+RUN apt-get install -y vim uuid
+
+RUN apt-get install python3 python3-pip
+WORKDIR $HOME
+ADD conf/requirements.txt requirements.txt
+RUN pip3 install -r requirements.txt
 
 # Now change the imagemagic policies on sizes
 RUN sed -i 's/256MiB/4GiB/g' /etc/ImageMagick-6/policy.xml
@@ -42,7 +47,8 @@ ENV CONF default
 RUN addgroup --gid 1000 goes
 RUN useradd -m -u 1000 -g 1000 goes
 
-WORKDIR $HOME
+ADD conf/monitor.conf bin/monitor.conf
+
 COPY bin $HOME/bin
 RUN chmod 755 $HOME/bin/run.sh
 
