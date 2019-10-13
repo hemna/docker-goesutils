@@ -160,7 +160,7 @@ class FileHandler(object):
         self.overlay(dest_file)
 
     def copy_false(self):
-        dest = "%s/animate" % self._destination(state=None) 
+        dest = "%s/animate" % self._destination(state=None)
         newfile_fmt = "%H-%M-%S"
         newfile_name = self.file_time.strftime(newfile_fmt)
         dest_file = "%s/%s.png" % (dest, newfile_name)
@@ -173,7 +173,7 @@ class FileHandler(object):
     def resize(self, dest_file):
         # rescale the file down to something manageable in size
         # the raw fd images are 5240x5240
-        cmd = ["/usr/bin/convert", 
+        cmd = ["/usr/bin/convert",
                 dest_file,
                 "-resize", "50%",
                 dest_file]
@@ -189,7 +189,9 @@ class FileHandler(object):
         self._execute(cmd)
 
     def animate_false(self):
-        dest = "%s/animate" % self._destination(state=None) 
+        dest = "%s/animate" % self._destination(state=None)
+        file_mp4 = "%s/earth.mp4" % dest
+        file_gif = "%s/earth.gif" % dest
         cmd = ["ffmpeg", "-y",
                "-framerate", "10",
                "-pattern_type", "glob",
@@ -197,13 +199,13 @@ class FileHandler(object):
                "-c:v", "libvpx-vp9",
                "-b:v", "1M",
                "-c:a", "libvorbis",
-               "earth.mp4"]
+               file_mp4]
         self._execute(cmd)
 
         cmd = ["ffmpeg", "-y",
                "-i", "earth.mp4",
                "-loop", "0",
-               "earth.gif"]
+               file_gif]
         self._execute(cmd)
 
     def overlay(self, image_file, state=None):
