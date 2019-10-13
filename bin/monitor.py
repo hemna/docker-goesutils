@@ -190,19 +190,20 @@ class FileHandler(object):
 
     def animate_false(self):
         dest = "%s/animate" % self._destination(state=None) 
-        cmd = ["ffmpeg", "-framerate", "10",
+        cmd = ["ffmpeg", "-y",
+               "-framerate", "10",
                "-pattern_type", "glob",
                "-i", "'*.png'",
                "-c:v", "libvpx-vp9",
                "-b:v", "1M",
                "-c:a", "libvorbis",
-               "animate.mp4"]
+               "earth.mp4"]
         self._execute(cmd)
 
-        cmd = ["ffmpeg",
-               "-i", "out.mp4",
+        cmd = ["ffmpeg", "-y",
+               "-i", "earth.mp4",
                "-loop", "0",
-               "animate.gif"]
+               "earth.gif"]
         self._execute(cmd)
 
     def overlay(self, image_file, state=None):
