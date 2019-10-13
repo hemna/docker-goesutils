@@ -4,5 +4,4 @@ telegraf --config /etc/telegraf/telegraf.conf --quiet &
 
 echo "using $CONF"
 cd $HOME/bin
-#./monitor.py --config-file $HOME/bin/monitor.conf
-/bin/bash
+./monitor.py --config-file $HOME/bin/monitor.conf
