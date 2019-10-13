@@ -159,6 +159,26 @@ class FileHandler(object):
         shutil.copyfile(self.source, dest_file)
         self.overlay(dest_file)
 
+    def copy_false(self):
+        dest = "%s/animate" % self._destination(state=None) 
+        newfile_fmt = "%H-%M-%S"
+        newfile_name = self.file_time.strftime(newfile_fmt)
+        dest_file = "%s/%s.png" % (dest, newfile_name)
+        LOG.debug("copy image to destination '%s'", dest_file)
+
+        self._ensure_dir(dest)
+        shutil.copyfile(self.source, dest_file)
+        self.resize(dest_file)
+
+    def resize(self, dest_file):
+        # rescale the file down to something manageable in size
+        # the raw fd images are 5240x5240
+        cmd = ["/usr/bin/convert", 
+                dest_file,
+                "-resize", "50%",
+                dest_file]
+        self._execute(cmd)
+
     def animate(self, state=None):
         dest = self._destination(state=state)
         LOG.info("animate directory '%s'", dest)
@@ -166,6 +186,23 @@ class FileHandler(object):
         cmd = ["/usr/bin/convert", "-loop", "0", "-delay", "15",
                "%s/*.png" % dest,
                "%s" % file]
+        self._execute(cmd)
+
+    def animate_false(self):
+        dest = "%s/animate" % self._destination(state=None) 
+        cmd = ["ffmpeg", "-framerate", "10",
+               "-pattern_type", "glob",
+               "-i", "'*.png'",
+               "-c:v", "libvpx-vp9",
+               "-b:v", "1M",
+               "-c:a", "libvorbis",
+               "animate.mp4"]
+        self._execute(cmd)
+
+        cmd = ["ffmpeg",
+               "-i", "out.mp4",
+               "-loop", "0",
+               "animate.gif"]
         self._execute(cmd)
 
     def overlay(self, image_file, state=None):
@@ -197,9 +234,14 @@ class FileHandler(object):
             # We want to crop for both CA and VA
             self.crop('va')
             self.crop('ca')
+            if self.chan == 'false-color':
+                self.copy_false()
+
             if animate:
-              self.animate(state='va')
-              self.animate(state='ca')
+                self.animate(state='va')
+                self.animate(state='ca')
+                if self.chan == 'false-color':
+                    self.animate_false()
         else:
             # This is an m1 or m2 file
             # We copy and animate

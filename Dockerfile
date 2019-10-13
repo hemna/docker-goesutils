@@ -27,7 +27,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN apt-get install -y tzdata
 RUN dpkg-reconfigure --frontend noninteractive tzdata
 
-RUN apt-get install -y vim uuid
+RUN apt-get install -y vim uuid sudo ffmpeg libasound2-plugins mencoder
 
 RUN apt-get install python3 python3-pip
 WORKDIR $HOME
