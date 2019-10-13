@@ -109,6 +109,12 @@ class FileHandler(object):
     def _ensure_dir(self, destination):
         os.makedirs(destination, exist_ok = True)
 
+    def file_exists(self, destination):
+        if os.path.exists(destination):
+            return true
+        else:
+            return false
+
     def _execute(self, cmd):
         command = ' '.join(cmd)
         LOG.info("EXEC '%s'", command)
@@ -138,15 +144,11 @@ class FileHandler(object):
             newfile_name = "%s.png" % self.ca_date.strftime(newfile_fmt)
 
         newfile = "%s/%s" % (dest, newfile_name)
-
-        crop_cmd = ["/usr/bin/convert",
-                    "%s" % self.source,
-                    "-crop",
-                    '"%s"' % resolution,
-                    "+repage",
-                    "%s" % newfile]
-        self._execute(crop_cmd)
-        self.overlay(newfile, state)
+        if not self.file_exists(newfile): 
+            crop_cmd = ["/usr/bin/convert", "%s" % self.source, "-crop",
+                    '"%s"' % resolution, "+repage", "%s" % newfile]
+            self._execute(crop_cmd)
+            self.overlay(newfile, state)
 
     def copy(self):
         dest = self._destination(state=None)
@@ -156,8 +158,9 @@ class FileHandler(object):
         LOG.debug("copy image to destination '%s'", dest_file)
 
         self._ensure_dir(dest)
-        shutil.copyfile(self.source, dest_file)
-        self.overlay(dest_file)
+        if not self.file_exists(dest_file):
+            shutil.copyfile(self.source, dest_file)
+            self.overlay(dest_file)
 
     def copy_false(self):
         dest = "%s/animate" % self._destination(state=None)
@@ -167,8 +170,9 @@ class FileHandler(object):
         LOG.debug("copy image to destination '%s'", dest_file)
 
         self._ensure_dir(dest)
-        shutil.copyfile(self.source, dest_file)
-        self.resize(dest_file)
+        if not self.file_exists(dest_file):
+            shutil.copyfile(self.source, dest_file)
+            self.resize(dest_file)
 
     def resize(self, dest_file):
         # rescale the file down to something manageable in size
