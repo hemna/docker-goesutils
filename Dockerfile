@@ -4,6 +4,8 @@ MAINTAINER Walter A. Boring IV <waboring@hemna.com>
 ENV VERSION=1.0.0
 ENV HOME=/home/goes
 ENV BRANCH="master"
+ARG UID=1000
+ARG GID=1000
 
 ENV INSTALL=$HOME/install
 RUN apt-get -y update
@@ -44,8 +46,8 @@ RUN sed -i 's/128MB/1.037GP/g' /etc/ImageMagick-6/policy.xml
 # override this to run another configuration
 ENV CONF default
 
-RUN addgroup --gid 1000 goes
-RUN useradd -m -u 1000 -g 1000 goes
+RUN addgroup --gid $GID goes
+RUN useradd -m -u $UID -g $GID goes
 
 ADD conf/monitor.conf bin/monitor.conf
 
