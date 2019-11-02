@@ -21,7 +21,7 @@ SCRIPT_DIR="/home/goes/bin"
 FONT="%s/Verdana_Bold.ttf" % SCRIPT_DIR
 
 
-LOG = log.getLogger(__name__)
+LOG = log.getLogger("goesmonitor")
 CONF = cfg.CONF
 
 conf = cfg.ConfigOpts()
@@ -81,10 +81,6 @@ class FileHandler(object):
         self.file_time = dto.replace(tzinfo=GMT)
         self.va_date = self.file_time.astimezone(EST)
         self.ca_date = self.file_time.astimezone(PST)
-        #print( "GMT %s" % self.file_time )
-        #print( "EST %s" % self.file_time.astimezone(EST))
-        #print( "PST %s" % self.file_time.astimezone(PST))
-
 
     def _destination(self, state=None):
         date_str = "%Y-%m-%d"
@@ -111,9 +107,9 @@ class FileHandler(object):
 
     def file_exists(self, destination):
         if os.path.exists(destination):
-            return true
+            return True
         else:
-            return false
+            return False
 
     def _execute(self, cmd):
         command = ' '.join(cmd)
@@ -126,7 +122,7 @@ class FileHandler(object):
             if len(out.stdout):
                 LOG.debug("OUT = '%s'", out.stdout.encode('utf-8'))
             if len(out.stderr):
-                LOG.debug("ERR = '%s'", out.stderr.encode('utf-8'))
+                LOG.warn("ERR = '%s'", out.stderr.encode('utf-8'))
 
         except Exception as ex:
             LOG.exception("FAIL %s", ex)
@@ -144,11 +140,11 @@ class FileHandler(object):
             newfile_name = "%s.png" % self.ca_date.strftime(newfile_fmt)
 
         newfile = "%s/%s" % (dest, newfile_name)
-        if not self.file_exists(newfile): 
-            crop_cmd = ["/usr/bin/convert", "%s" % self.source, "-crop",
-                    '"%s"' % resolution, "+repage", "%s" % newfile]
-            self._execute(crop_cmd)
-            self.overlay(newfile, state)
+        #if not self.file_exists(newfile):
+        crop_cmd = ["/usr/bin/convert", "%s" % self.source, "-crop",
+                '"%s"' % resolution, "+repage", "%s" % newfile]
+        self._execute(crop_cmd)
+        self.overlay(newfile, state)
 
     def copy(self):
         dest = self._destination(state=None)
@@ -158,9 +154,9 @@ class FileHandler(object):
         LOG.debug("copy image to destination '%s'", dest_file)
 
         self._ensure_dir(dest)
-        if not self.file_exists(dest_file):
-            shutil.copyfile(self.source, dest_file)
-            self.overlay(dest_file)
+        #if not self.file_exists(dest_file):
+        shutil.copyfile(self.source, dest_file)
+        self.overlay(dest_file)
 
     def copy_false(self):
         dest = "%s/animate" % self._destination(state=None)
@@ -170,16 +166,16 @@ class FileHandler(object):
         LOG.debug("copy image to destination '%s'", dest_file)
 
         self._ensure_dir(dest)
-        if not self.file_exists(dest_file):
-            shutil.copyfile(self.source, dest_file)
-            self.resize(dest_file)
+        #if not self.file_exists(dest_file):
+        shutil.copyfile(self.source, dest_file)
+        self.resize(dest_file)
 
     def resize(self, dest_file):
         # rescale the file down to something manageable in size
         # the raw fd images are 5240x5240
         cmd = ["/usr/bin/convert",
                 dest_file,
-                "-resize", "50%",
+                "-resize", "25%",
                 dest_file]
         self._execute(cmd)
 
@@ -194,20 +190,22 @@ class FileHandler(object):
 
     def animate_false(self):
         dest = "%s/animate" % self._destination(state=None)
-        file_mp4 = "%s/earth.mp4" % dest
+        file_webm = "%s/earth.webm" % dest
         file_gif = "%s/earth.gif" % dest
         cmd = ["ffmpeg", "-y",
                "-framerate", "10",
                "-pattern_type", "glob",
-               "-i", "'*.png'",
+               "-i", "'%s/*.png'" % dest,
                "-c:v", "libvpx-vp9",
-               "-b:v", "1M",
+               #"-b:v", "3M",
+               "-b:v", "0",
+               "-crf", "15",
                "-c:a", "libvorbis",
-               file_mp4]
+               file_webm]
         self._execute(cmd)
 
         cmd = ["ffmpeg", "-y",
-               "-i", "earth.mp4",
+               "-i", file_webm,
                "-loop", "0",
                file_gif]
         self._execute(cmd)
@@ -267,12 +265,9 @@ class Watcher:
         event_handler = Handler()
         self.observer.schedule(event_handler, self.DIRECTORY_TO_WATCH, recursive=True)
         self.observer.start()
-        cnt = 1
         try:
             while True:
-                time.sleep(5)
-                LOG.debug("sleeping %s", cnt)
-                cnt+=1
+                time.sleep(1)
         except:
             self.observer.stop()
             LOG.error("Error")
@@ -303,12 +298,13 @@ def process_dir(process_dir):
         animate=False
         for f in fnames:
             LOG.info("Process file '%s' (%s of %s)", f, cnt, total_files)
-            cnt+=1
             process_file = "%s/%s" % (dirpath, f)
             fh = FileHandler(process_file)
-            if cnt >= total_files:
+            if cnt == total_files:
                 animate=True
             fh.process(animate=animate)
+            cnt+=1
+
 
 GMT = Zone(0,False,'GMT')
 EST = Zone(-5,False,'EST')
