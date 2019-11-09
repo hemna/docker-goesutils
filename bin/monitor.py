@@ -161,12 +161,12 @@ class FileHandler(object):
             newfile_name = "%s.png" % self.ca_date.strftime(newfile_fmt)
 
         newfile = "%s/%s" % (dest, newfile_name)
-        #if not self.file_exists(newfile):
-        crop_cmd = ["/usr/bin/convert", "%s" % self.source,
-                    "-crop", '"%s"' % resolution,
-                    "+repage", "%s" % newfile]
-        self._execute(crop_cmd)
-        self.overlay(newfile, state)
+        if not self.file_exists(newfile):
+            crop_cmd = ["/usr/bin/convert", "%s" % self.source,
+                        "-crop", '"%s"' % resolution,
+                        "+repage", "%s" % newfile]
+            self._execute(crop_cmd)
+            self.overlay(newfile, state)
 
     def copy(self, subdest=None):
         """Copy a full disc image to destination. """
@@ -182,9 +182,9 @@ class FileHandler(object):
 
         self._ensure_src()
         self._ensure_dir(dest)
-        #if not self.file_exists(dest_file):
-        shutil.copyfile(self.source, dest_file)
-        self.overlay(dest_file)
+        if not self.file_exists(dest_file):
+            shutil.copyfile(self.source, dest_file)
+            self.overlay(dest_file)
 
     def resize(self, dest_file):
         # rescale the file down to something manageable in size
