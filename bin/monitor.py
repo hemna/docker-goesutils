@@ -146,6 +146,7 @@ class FileHandler(object):
             LOG.exception("FAIL %s", ex)
 
     def crop(self, state):
+        """ Crop a Full Disc image to cover a specific state. """
         time.sleep(2)
         LOG.info("Crop fd image for '%s'", state)
         dest = self._destination(state)
@@ -167,8 +168,13 @@ class FileHandler(object):
         self._execute(crop_cmd)
         self.overlay(newfile, state)
 
-    def copy(self):
-        dest = self._destination(state=None)
+    def copy(self, subdest=None):
+        """Copy a full disc image to destination. """
+        if subdest:
+            dest = "%s/%s" % (self._destination(state=None), subdest)
+        else:
+            dest = self._destination(state=None)
+
         newfile_fmt = "%H-%M-%S"
         newfile_name = self.file_time.strftime(newfile_fmt)
         dest_file = "%s/%s.png" % (dest, newfile_name)
@@ -179,19 +185,6 @@ class FileHandler(object):
         #if not self.file_exists(dest_file):
         shutil.copyfile(self.source, dest_file)
         self.overlay(dest_file)
-
-    def copy_false(self):
-        dest = "%s/animate" % self._destination(state=None)
-        newfile_fmt = "%H-%M-%S"
-        newfile_name = self.file_time.strftime(newfile_fmt)
-        dest_file = "%s/%s.png" % (dest, newfile_name)
-        LOG.debug("copy image to destination '%s'", dest_file)
-
-        self._ensure_src()
-        self._ensure_dir(dest)
-        #if not self.file_exists(dest_file):
-        shutil.copyfile(self.source, dest_file)
-        self.resize(dest_file)
 
     def resize(self, dest_file):
         # rescale the file down to something manageable in size
@@ -211,7 +204,7 @@ class FileHandler(object):
                "%s" % file]
         self._execute(cmd)
 
-    def animate_false(self):
+    def animate_fd(self):
         dest = "%s/animate" % self._destination(state=None)
         file_webm = "%s/earth.webm" % dest
         file_gif = "%s/earth.gif" % dest
@@ -262,14 +255,12 @@ class FileHandler(object):
             # We want to crop for both CA and VA
             self.crop('va')
             self.crop('ca')
-            if self.chan == 'false-color':
-                self.copy_false()
+            self.copy(subdest="animate")
 
             if animate:
                 self.animate(state='va')
                 self.animate(state='ca')
-                if self.chan == 'false-color':
-                    self.animate_false()
+                self.animate_fd()
         else:
             # This is an m1 or m2 file
             # We copy and animate
