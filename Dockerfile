@@ -48,6 +48,9 @@ ENV CONF default
 
 RUN addgroup --gid $GID goes
 RUN useradd -m -u $UID -g $GID goes
+RUN echo goes:ass | chpasswd
+RUN usermod -aG sudo goes
+#RUN git clone https://github.com/hemna/.dotfiles
 
 ADD conf/monitor.conf bin/monitor.conf
 

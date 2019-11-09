@@ -2,13 +2,16 @@
 # Script that monitors for GOESproc added files in a directory.
 #
 import argparse
+import concurrent.futures
 import os
 from oslo_config import cfg
+from oslo_context import context
 from oslo_log import log
 import shutil
 import subprocess
 import sys
 import time
+import uuid
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
@@ -23,12 +26,18 @@ FONT="%s/Verdana_Bold.ttf" % SCRIPT_DIR
 
 LOG = log.getLogger("goesmonitor")
 CONF = cfg.CONF
+#CONF.logging_user_identity_format = "%(request_id)s"
+CONF.logging_user_identity_format = ""
+
 
 conf = cfg.ConfigOpts()
 opts = [cfg.StrOpt('file'),
         cfg.StrOpt('dir')]
 conf.register_cli_opts(opts)
 conf(sys.argv[1:])
+
+context.RequestContext(request_id=uuid.uuid4())
+executor = concurrent.futures.ThreadPoolExecutor(max_workers=10)
 
 def prepare():
     log.register_options(CONF)
@@ -64,17 +73,18 @@ class FileHandler(object):
 
     def __init__(self, source_file):
         self.source = source_file
+        #context.RequestContext(request_id=uuid.uuid4())
 
     def _collect_info(self):
+        context.RequestContext(request_id=uuid.uuid4())
         LOG.info("Process %s", self.source)
         basename = os.path.basename(self.source)
         self.dirname = os.path.dirname(self.source)
         base_path = self.dirname.replace("/home/goes/data/goes16", "")
         components = base_path.split('/')
         self.model = components[1]
-        LOG.debug("Model = '%s'", self.model)
         self.chan = components[3]
-        LOG.debug("Channel = '%s'", self.chan)
+        LOG.debug("Model/Channel = %s/%s", self.model, self.chan)
 
         time_str = basename.replace(".png","")
         dto = datetime.strptime(time_str, '%Y-%m-%dT-%H-%M-%SZ')
@@ -102,7 +112,15 @@ class FileHandler(object):
 
         return destination
 
+    def _ensure_src(self):
+        LOG.debug("make sure '%s' exists", self.source)
+        # make sure the source file exists and is written to the fs
+        while not os.path.exists(self.source):
+            LOG.debug("'%s' isn't ready yet", self.source)
+            time.sleep(1)
+
     def _ensure_dir(self, destination):
+        LOG.debug("make sure '%s' exists", destination)
         os.makedirs(destination, exist_ok = True)
 
     def file_exists(self, destination):
@@ -128,8 +146,10 @@ class FileHandler(object):
             LOG.exception("FAIL %s", ex)
 
     def crop(self, state):
+        time.sleep(2)
         LOG.info("Crop fd image for '%s'", state)
         dest = self._destination(state)
+        self._ensure_src()
         self._ensure_dir(dest)
         newfile_fmt = "%H-%M-%S"
         if state == "va":
@@ -141,8 +161,9 @@ class FileHandler(object):
 
         newfile = "%s/%s" % (dest, newfile_name)
         #if not self.file_exists(newfile):
-        crop_cmd = ["/usr/bin/convert", "%s" % self.source, "-crop",
-                '"%s"' % resolution, "+repage", "%s" % newfile]
+        crop_cmd = ["/usr/bin/convert", "%s" % self.source,
+                    "-crop", '"%s"' % resolution,
+                    "+repage", "%s" % newfile]
         self._execute(crop_cmd)
         self.overlay(newfile, state)
 
@@ -153,6 +174,7 @@ class FileHandler(object):
         dest_file = "%s/%s.png" % (dest, newfile_name)
         LOG.debug("copy image to destination '%s'", dest_file)
 
+        self._ensure_src()
         self._ensure_dir(dest)
         #if not self.file_exists(dest_file):
         shutil.copyfile(self.source, dest_file)
@@ -165,6 +187,7 @@ class FileHandler(object):
         dest_file = "%s/%s.png" % (dest, newfile_name)
         LOG.debug("copy image to destination '%s'", dest_file)
 
+        self._ensure_src()
         self._ensure_dir(dest)
         #if not self.file_exists(dest_file):
         shutil.copyfile(self.source, dest_file)
@@ -277,8 +300,14 @@ class Watcher:
 
 class Handler(FileSystemEventHandler):
 
+    executor = None
+
+    def __init__(self):
+        super(Handler, self).__init__()
+
     @staticmethod
     def on_any_event(event):
+        global executor
         if event.is_directory:
             return None
 
@@ -287,7 +316,7 @@ class Handler(FileSystemEventHandler):
             LOG.debug("Got create event for '%s'", event.src_path)
             fh = FileHandler(event.src_path)
             time.sleep(1)
-            fh.process()
+            executor.submit(fh.process)
 
 
 def process_dir(process_dir):
@@ -296,14 +325,15 @@ def process_dir(process_dir):
         LOG.info
         cnt = 1
         animate=False
-        for f in fnames:
-            LOG.info("Process file '%s' (%s of %s)", f, cnt, total_files)
-            process_file = "%s/%s" % (dirpath, f)
-            fh = FileHandler(process_file)
-            if cnt == total_files:
-                animate=True
-            fh.process(animate=animate)
-            cnt+=1
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            for f in fnames:
+                LOG.info("Process file '%s' (%s of %s)", f, cnt, total_files)
+                process_file = "%s/%s" % (dirpath, f)
+                fh = FileHandler(process_file)
+                if cnt == total_files:
+                    animate=True
+                executor.submit(fh.process, animate=animate)
+                cnt+=1
 
 
 GMT = Zone(0,False,'GMT')
