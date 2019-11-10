@@ -1,0 +1,21 @@
+version: '3.4'
+
+services:
+    goesutils:
+        build:
+            context: .
+            args:
+              UID: 1000
+              GID: 1000
+        container_name: goesutils
+        user: 1000:1000
+        hostname: goesutils
+        restart: unless-stopped
+        volumes:
+            - /opt/docker/goestools/data:/home/goes/data
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:5000/healthcheck"]
+            interval: 1m30s
+            timeout: 10s
+            retries: 3
+            start_period: 40s

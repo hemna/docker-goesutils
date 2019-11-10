@@ -15,6 +15,7 @@ RUN apt-get install -y wget python3 python3-pip git-core
 RUN apt-get install -y imagemagick
 RUN apt-get install -y inotify-tools
 RUN apt-get install -y htop util-linux
+RUN apt-get install -y vim uuid sudo ffmpeg libasound2-plugins mencoder curl
 
 # Add telegraf monitor agent
 RUN wget -qO- https://repos.influxdata.com/influxdb.key | apt-key add -
@@ -29,9 +30,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN apt-get install -y tzdata
 RUN dpkg-reconfigure --frontend noninteractive tzdata
 
-RUN apt-get install -y vim uuid sudo ffmpeg libasound2-plugins mencoder
 
-RUN apt-get install python3 python3-pip
 WORKDIR $HOME
 ADD conf/requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt

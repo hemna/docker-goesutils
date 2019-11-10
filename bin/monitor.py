@@ -3,6 +3,7 @@
 #
 import argparse
 import concurrent.futures
+from flask import Flask
 import os
 from oslo_config import cfg
 from oslo_context import context
@@ -11,6 +12,7 @@ import shutil
 import subprocess
 import sys
 import time
+import threading
 import uuid
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -22,6 +24,7 @@ from datetime import timedelta
 APP = 'monitor'
 SCRIPT_DIR="/home/goes/bin"
 FONT="%s/Verdana_Bold.ttf" % SCRIPT_DIR
+PID_FILE="/home/goes/monitor.pid"
 
 
 LOG = log.getLogger("goesmonitor")
@@ -327,11 +330,27 @@ def process_dir(process_dir):
                 cnt+=1
 
 
+def _write_pid():
+    pid = str(os.getpid())
+    f = open(PID_FILE, 'w')
+    f.write(pid)
+    f.close()
+
+def _rm_pid():
+    os.remove(PID_FILE)
+
+
 GMT = Zone(0,False,'GMT')
 EST = Zone(-5,False,'EST')
 PST = Zone(-8,False,'PST')
 
+app = Flask(__name__)
+@app.route("/healthcheck")
+def main():
+    return "yes"
+
 if __name__ == '__main__':
+    _write_pid()
     prepare()
     if conf.dir:
         # User wants to process and entire directory
@@ -341,5 +360,9 @@ if __name__ == '__main__':
         fh = FileHandler(conf.file)
         fh.process()
     else:
+        # launch the healthcheck flask first
+        threading.Thread(target=app.run).start()
+        # Now launch the watcher
         w = Watcher("/home/goes/data/goes16")
         w.run()
+    _rm_pid()
