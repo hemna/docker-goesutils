@@ -173,7 +173,7 @@ class FileHandler(object):
             self._execute(crop_cmd)
             self.overlay(newfile, state)
 
-    def copy(self, subdest=None, overlay=True):
+    def copy(self, subdest=None, overlay=True, resize=False):
         """Copy a full disc image to destination. """
         if subdest:
             dest = "%s/%s" % (self._destination(state=None), subdest)
@@ -189,6 +189,9 @@ class FileHandler(object):
         self._ensure_dir(dest)
         if not self.file_exists(dest_file):
             shutil.copyfile(self.source, dest_file)
+            if resize:
+                self.resize(dest_file)
+
             if overlay:
                 self.overlay(dest_file)
 
@@ -268,7 +271,7 @@ class FileHandler(object):
             # We want to crop for both CA and VA
             self.crop('va')
             self.crop('ca')
-            self.copy(subdest="animate", overlay=False)
+            self.copy(subdest="animate", overlay=False, resize=True)
 
             if animate:
                 self.animate(state='va')
