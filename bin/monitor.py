@@ -171,7 +171,7 @@ class FileHandler(object):
             self._execute(crop_cmd)
             self.overlay(newfile, state)
 
-    def copy(self, subdest=None):
+    def copy(self, subdest=None, overlay=True):
         """Copy a full disc image to destination. """
         if subdest:
             dest = "%s/%s" % (self._destination(state=None), subdest)
@@ -187,7 +187,8 @@ class FileHandler(object):
         self._ensure_dir(dest)
         if not self.file_exists(dest_file):
             shutil.copyfile(self.source, dest_file)
-            self.overlay(dest_file)
+            if overlay:
+                self.overlay(dest_file)
 
     def resize(self, dest_file):
         # rescale the file down to something manageable in size
@@ -258,7 +259,7 @@ class FileHandler(object):
             # We want to crop for both CA and VA
             self.crop('va')
             self.crop('ca')
-            self.copy(subdest="animate")
+            self.copy(subdest="animate", overlay=False)
 
             if animate:
                 self.animate(state='va')
@@ -316,7 +317,6 @@ class Handler(FileSystemEventHandler):
 def process_dir(process_dir):
     for dirpath, dnames, fnames in os.walk(process_dir):
         total_files = len(fnames)
-        LOG.info
         cnt = 1
         animate=False
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
