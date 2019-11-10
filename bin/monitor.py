@@ -35,7 +35,9 @@ CONF.logging_user_identity_format = ""
 
 conf = cfg.ConfigOpts()
 opts = [cfg.StrOpt('file'),
-        cfg.StrOpt('dir')]
+        cfg.StrOpt('dir'),
+        cfg.BoolOpt('force')
+        ]
 conf.register_cli_opts(opts)
 conf(sys.argv[1:])
 
@@ -202,33 +204,40 @@ class FileHandler(object):
     def animate(self, state=None):
         dest = self._destination(state=state)
         LOG.info("animate directory '%s'", dest)
-        file = "%s/animate.gif" % dest
+        dest_file = "%s/animate.gif" % dest
+        self._animated_gif("%s/*.png" % dest,
+                           "%s" % dest_file)
+
+    def _animated_gif(self, source, destination):
         cmd = ["/usr/bin/convert", "-loop", "0", "-delay", "15",
-               "%s/*.png" % dest,
-               "%s" % file]
+               "%s" % source,
+               "%s" % destination]
         self._execute(cmd)
 
     def animate_fd(self):
         dest = "%s/animate" % self._destination(state=None)
         file_webm = "%s/earth.webm" % dest
         file_gif = "%s/earth.gif" % dest
-        cmd = ["ffmpeg", "-y",
-               "-framerate", "10",
-               "-pattern_type", "glob",
-               "-i", "'%s/*.png'" % dest,
-               "-c:v", "libvpx-vp9",
-               #"-b:v", "3M",
-               "-b:v", "0",
-               "-crf", "15",
-               "-c:a", "libvorbis",
-               file_webm]
-        self._execute(cmd)
 
-        cmd = ["ffmpeg", "-y",
-               "-i", file_webm,
-               "-loop", "0",
-               file_gif]
-        self._execute(cmd)
+        self._animated_gif("%s/*.png" % dest,
+                           file_gif)
+        #cmd = ["ffmpeg", "-y",
+        #       "-framerate", "10",
+        #       "-pattern_type", "glob",
+        #       "-i", "'%s/*.png'" % dest,
+        #       "-c:v", "libvpx-vp9",
+        #       #"-b:v", "3M",
+        #       "-b:v", "0",
+        #       "-crf", "15",
+        #       "-c:a", "libvorbis",
+        #       file_webm]
+        #self._execute(cmd)
+
+        #cmd = ["ffmpeg", "-y",
+        #       "-i", file_webm,
+        #       "-loop", "0",
+        #       file_gif]
+        #self._execute(cmd)
 
     def overlay(self, image_file, state=None):
         human_date_fmt = "%A %b %e, %Y  %T  %Z"
