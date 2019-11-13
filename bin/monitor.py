@@ -146,7 +146,7 @@ class FileHandler(object):
             elif region == 'ca':
                 date = self.ca_date.strftime(date_str)
             else:
-                date = self.gmt_date.strftime(date_str)
+                date = self.va_date.strftime(date_str)
 
             destination = ("%s/%s/%s/%s/%s" % (self.process_dir,
                                                self.model,
@@ -210,7 +210,7 @@ class FileHandler(object):
             newfile_name = "%s.png" % self.ca_date.strftime(newfile_fmt)
         elif region == 'usa':
             resolution = self.satellite['crop']['usa']
-            newfile_name = "%s.png" % self.gmt_date.strftime(newfile_fmt)
+            newfile_name = "%s.png" % self.va_date.strftime(newfile_fmt)
 
 
         newfile = "%s/%s" % (dest, newfile_name)
