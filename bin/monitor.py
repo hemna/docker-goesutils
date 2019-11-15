@@ -299,7 +299,7 @@ class FileHandler(object):
             elif region == "ca":
                 human_date = self.ca_date.strftime(human_date_fmt)
             elif region == "usa":
-                human_date = self.gmt_date.strftime(human_date_fmt)
+                human_date = self.va_date.strftime(human_date_fmt)
         else:
             font_size = "12"
             human_date = self.file_time.strftime(human_date_fmt)
