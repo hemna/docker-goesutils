@@ -1,4 +1,4 @@
-FROM ubuntu:18.10 AS goesutils
+FROM ubuntu:18.04 AS goesutils
 MAINTAINER Walter A. Boring IV <waboring@hemna.com>
 
 ENV VERSION=1.0.0
