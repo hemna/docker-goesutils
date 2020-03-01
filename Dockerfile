@@ -61,5 +61,4 @@ RUN chmod 755 $HOME && cd $HOME && mkdir install
 RUN chown -R goes:goes $HOME
 
 VOLUME ["/home/goes/data"]
-
-CMD $HOME/bin/run.sh
+ENTRYPOINT [ "/bin/bash", "/home/goes/bin/run.sh" ]
