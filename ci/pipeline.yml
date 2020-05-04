@@ -1,0 +1,54 @@
+---
+resource_types:
+    - name: hangouts-resource
+      type: docker-image
+      source:
+          repository: cloudinn/concourse-hangouts-resource
+          tag: latest
+          post_url: true
+
+resources:
+  - name: docker-goesutils-src
+    type: git
+    source:
+      uri: https://github.com/hemna/docker-goesutils
+
+  - name: goestools-docker-image
+    type: docker-image
+    source:
+        repository: 192.168.1.3:5000/hemna/goesutils
+        username: ((private-reg-user))
+        password: ((private-reg-password))
+        tag: latest
+        debug: true
+        insecure_registries: [ "192.168.1.3:5000" ]
+
+  - name: hangouts-chat
+    type: hangouts-resource
+    source:
+        webhook_url: ((hangouts-chat-webhook-url))
+        post_url: true
+
+jobs:
+  - name: build-and-publish-goesutils
+    public: true
+    serial: true
+    plan:
+      - get: docker-goesutils-src
+        trigger: true
+      - put: goestools-docker-image
+        params: 
+          build: docker-goestools-src/build/
+
+    on_failure:
+        try:
+            put: hangouts-chat
+            params:
+                message: Building the latest docker-goesutils docker image FUCKING FAILED BITCH!
+
+    on_success:
+        try:
+            put: hangouts-chat
+            params:
+                message: New docker-goesutils image up bitch!
+                post_url: false
