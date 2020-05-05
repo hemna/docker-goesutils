@@ -38,7 +38,7 @@ jobs:
         trigger: true
       - put: goestools-docker-image
         params: 
-          build: docker-goestools-src/build/
+          build: docker-goesutils-src/build/
 
     on_failure:
         try:
