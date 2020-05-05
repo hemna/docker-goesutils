@@ -7,6 +7,12 @@ resource_types:
           tag: latest
           post_url: true
 
+    - name: docker-compose
+      type: docker-image
+      source:
+          repository: troykinsella/concourse-docker-compose-resource
+          tag: latest
+
 resources:
   - name: docker-goesutils-src
     type: git
@@ -23,6 +29,11 @@ resources:
         debug: true
         insecure_registries: [ "192.168.1.3:5000" ]
 
+  - name: docker-compose
+    type: docker-compose
+    source:
+        host: 192.168.1.44
+
   - name: hangouts-chat
     type: hangouts-resource
     source:
@@ -30,6 +41,23 @@ resources:
         post_url: true
 
 jobs:
+  - name: README
+    serial: true
+    plan:
+    - task: describe-this-pipeline
+      config:
+        platform: 'linux'
+        image_resource:
+          type: docker-image
+          source:
+            repository: alpine
+            tag: latest
+        run:
+          path: /bin/echo
+          args:
+          - -e
+          - '\t    This pipeline is defined at: https://github.com/hemna/docker-goesutils/tree/master/ci\n'
+
   - name: build-and-publish-goesutils
     public: true
     serial: true
@@ -51,4 +79,33 @@ jobs:
             put: hangouts-chat
             params:
                 message: New docker-goesutils image up bitch!
+                post_url: false
+
+  - name: restart-container
+    public: true
+    serial: true
+    plan:
+      - get: docker-goesutils-src
+        trigger: true
+        passed: [build-and-publish-goesutils]
+      - put: docker-compose
+        params:
+            command: down
+            compose_file: docker-goesutils-src/docker/docker-compose.yml
+      - put: docker-compose
+        params:
+            command: up
+            compose_file: docker-goesutils-src/docker/docker-compose.yml
+
+    on_failure:
+        try:
+            put: hangouts-chat
+            params:
+                message: Failed to restart goesutils BITCH Check that shit!
+
+    on_success:
+        try:
+            put: hangouts-chat
+            params:
+                message: New goesutils container restarted! bitch!
                 post_url: false
