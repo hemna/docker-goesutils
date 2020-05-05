@@ -2,11 +2,7 @@ version: '3.4'
 
 services:
     goesutils:
-        build:
-            context: .
-            args:
-              UID: 1000
-              GID: 1000
+        image: 192.168.1.3:5000/hemna/goesutils
         container_name: goesutils
         user: 1000:1000
         hostname: goesutils
