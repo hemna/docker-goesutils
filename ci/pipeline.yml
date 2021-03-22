@@ -1,17 +1,15 @@
 ---
 resource_types:
-    - name: hangouts-resource
-      type: docker-image
-      source:
-          repository: cloudinn/concourse-hangouts-resource
-          tag: latest
-          post_url: true
-
     - name: docker-compose
       type: docker-image
       source:
           repository: troykinsella/concourse-docker-compose-resource
           tag: latest
+
+    - name: slack-alert
+      type: docker-image
+      source:
+        repository: arbourd/concourse-slack-alert-resource
 
 resources:
   - name: docker-goesutils-src
@@ -34,11 +32,10 @@ resources:
     source:
         host: 192.168.1.44
 
-  - name: hangouts-chat
-    type: hangouts-resource
+  - name: slack-notify
+    type: slack-alert
     source:
-        webhook_url: ((hangouts-chat-webhook-url))
-        post_url: true
+        url: ((slack-alerts-webhook-url))
 
 jobs:
   - name: README
@@ -70,16 +67,14 @@ jobs:
 
     on_failure:
         try:
-            put: hangouts-chat
+            put: slack-notify
             params:
-                message: Building the latest docker-goesutils docker image FUCKING FAILED BITCH!
-
+              alert_type: failed
     on_success:
         try:
-            put: hangouts-chat
+            put: slack-notify
             params:
-                message: New docker-goesutils image up bitch!
-                post_url: false
+              alert_type: success
 
   - name: restart-container
     public: true
@@ -99,13 +94,12 @@ jobs:
 
     on_failure:
         try:
-            put: hangouts-chat
+            put: slack-notify
             params:
-                message: Failed to restart goesutils BITCH Check that shit!
+              alert_type: failed
 
     on_success:
         try:
-            put: hangouts-chat
+            put: slack-notify
             params:
-                message: New goesutils container restarted! bitch!
-                post_url: false
+              alert_type: success
