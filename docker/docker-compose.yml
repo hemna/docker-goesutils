@@ -2,7 +2,7 @@ version: '3.4'
 
 services:
     goesutils:
-        image: 192.168.1.3:5000/hemna/goesutils
+        image: harbor.hemna.com/hemna6969/goesutils
         container_name: goesutils
         user: 1000:1000
         hostname: goesutils
