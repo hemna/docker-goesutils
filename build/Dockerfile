@@ -18,11 +18,11 @@ RUN apt-get install -y htop util-linux
 RUN apt-get install -y vim uuid sudo ffmpeg libasound2-plugins mencoder curl
 
 # Add telegraf monitor agent
-RUN wget -qO- https://repos.influxdata.com/influxdb.key | apt-key add -
-RUN echo "deb https://repos.influxdata.com/debian stretch stable" | tee /etc/apt/sources.list.d/influxdb.list
-RUN apt-get -y update
-RUN apt-get install -y telegraf sudo
-ADD conf/telegraf.conf /etc/telegraf
+#RUN wget -qO- https://repos.influxdata.com/influxdb.key | apt-key add -
+#RUN echo "deb https://repos.influxdata.com/debian stretch stable" | tee /etc/apt/sources.list.d/influxdb.list
+#RUN apt-get -y update
+#RUN apt-get install -y telegraf sudo
+#ADD conf/telegraf.conf /etc/telegraf
 
 # Setup Timezone
 ENV TZ=US/Eastern
